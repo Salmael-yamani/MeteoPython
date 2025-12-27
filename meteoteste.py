@@ -1,4 +1,5 @@
-
+from idlelib.sidebar import temp_enable_text_widget
+from logging import exception
 
 import requests
 import schedule
@@ -6,6 +7,7 @@ import time
 from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
+
 
 API_Key = "40911df8159672644fdbde4c035f4f52"
 
@@ -36,35 +38,69 @@ def recuperer_meteo() :
 
     connexion = creer_connexion()
     if not connexion :
-        print("on peut pas de connecter a MySQL")
+        print("on ne peut pas de connecter a MySQL")
         return
     cursor = connexion.cursor()
+    succes = 0
+
+    erreurs = 0
 
     for ville in ville1 + ville2 :
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={ville}&appid={API_Key}&units=metric"
-        response = requests.get(url)
-        data = response.json()
+       try :
 
-        print(f"\nville :", data["name"])
-        print(f"Temperature :", data["main"]["temp"], "C")
-        print(f"humidite :", data["main"]["humidity"], "%")
-        print(f"Etat du ciel:", data["weather"][0]["description"])
+           url = f"http://api.openweathermap.org/data/2.5/weather?q={ville}&appid={API_Key}&units=metric"
+           response = requests.get(url)
+           data = response.json()
+
+           ville_nom = data["name"]
+           temperature = data["main"]["temp"]
+           humidite = data["main"]["humidity"]
+           descriptions = data["weather"][0]["description"]
+           temp_min = data["main"]["temp_min"]
+           temp_max = data["main"]["temp_max"]
 
 
-        requete = """ insert into historique_meteo ( ville , Temperature, humidite, descriptions, temp_min, temp_max)
-        VALUES (%s, %s, %s, %s, %s, %s)  
+
+           print(f"\nville : {ville_nom}")
+           print(f"Température  : {temperature} °C")
+           print(f"Humidité : {humidite} %")
+           print(f"État du ciel : {descriptions}" )
+
+
+           requete = """ insert into historique_meteo ( ville , Temperature, humidite, descriptions, temp_min, temp_max)
+           VALUES (%s, %s, %s, %s, %s, %s)  
         """
-        valeurs = (
-            ville_nom ,
-            temperature ,
-            humidite ,
-            descriptions ,
-            temp_min ,
-            temp_max
-        )
-        cursor.execute(requete , valeurs)
-        connexion.commit()
-        print(f"Les donnees enregistrees dans MySQL")
+           valeurs = (
+               ville_nom,
+               temperature,
+               humidite,
+               descriptions,
+               temp_min,
+               temp_max
+           )
+
+           cursor.execute(requete, valeurs)
+           connexion.commit()
+           print(f"Les donnees sont  enregistrees dans MySQL")
+           succes += 1
+
+       except exception as e :
+           print(f"il y a un erreur pour {ville} : {e}")
+           erreurs += 1
+
+    cursor.close()
+    connexion.close()
+
+
+
+
+
+
+
+
+
+
+
 
 
 

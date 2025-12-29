@@ -1,5 +1,4 @@
-from idlelib.sidebar import temp_enable_text_widget
-from logging import exception
+
 
 import requests
 import schedule
@@ -7,6 +6,7 @@ import time
 from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
+
 
 
 API_Key = "40911df8159672644fdbde4c035f4f52"
@@ -67,6 +67,8 @@ def recuperer_meteo() :
            print(f"État du ciel : {descriptions}" )
 
 
+
+
            requete = """ insert into historique_meteo ( ville , Temperature, humidite, descriptions, temp_min, temp_max)
            VALUES (%s, %s, %s, %s, %s, %s)  
         """
@@ -84,35 +86,104 @@ def recuperer_meteo() :
            print(f"Les donnees sont  enregistrees dans MySQL")
            succes += 1
 
-       except exception as e :
+       except Exception as e :
            print(f"il y a un erreur pour {ville} : {e}")
            erreurs += 1
+
+
 
     cursor.close()
     connexion.close()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 schedule.every(1).hours.do(recuperer_meteo)
 recuperer_meteo()
+
+
 print("******")
 print("Prochaine Mise a Jour dans 1 heur ")
 print("******")
 
-while True :
-    schedule.run_pending()
-    time.sleep(60)
+
+
+
+
+
+###partie 2
+
+def choix_de_utilisateur() :
+
+    print("Bienvenue ")
+    ville_demandee = input("🌍 entrez le nom d'une ville : ")
+
+    if not ville_demandee :
+        print("nom de ville vide ")
+        return
+
+    connexion = creer_connexion()
+    if not connexion :
+        return
+    cursor = connexion.cursor()
+
+    try :
+        url_actuel = f"http://api.openweathermap.org/data/2.5/weather?q={ville_demandee}&appid={API_Key}&units=metric"
+        response_actuel = requests.get(url_actuel)
+
+        if response_actuel.status_code == 404:
+            print(f"la ville n'exsit pas ou un faute d'ortographe ")
+            return
+        data_actuel = response_actuel.json()
+
+        ville_nom = data_actuel["name"]
+        temperature = data_actuel["main"]["temp"]
+        humidite = data_actuel["main"]["humidity"]
+        descriptions = data_actuel["weather"][0]["description"]
+        vitesse_vent = data_actuel["wind"]["speed"]
+
+        url_forecast = f"http://api.openweathermap.org/data/2.5/forecast?q={ville_demandee}&appid={API_Key}&units=metric"
+        response_forecast = requests.get(url_forecast)
+        data_forecast = response_forecast.json()
+
+
+        probabilite_pluie = 0
+        if "list" in data_forecast :
+            previsions = data_forecast["list"]
+            if len(previsions) > 0 :
+                premiere_prevision = previsions[0]
+                pop = premiere_prevision.get("pop",0)
+                probabilite_pluie = int(pop * 100)
+
+        print(f" Meteo acuelle - {ville_nom.upper() : ^7} ")
+        print(f"Température  : {temperature} °C")
+        print(f"Humidité : {humidite} %")
+        print(f"État du ciel : {descriptions}")
+        print(f" vitesse du vent : {vitesse_vent}")
+        print(f"Probablite de pluie :{probabilite_pluie}")
+
+    except Exception as e :
+        print(f"erreur : {e}")
+
+        cursor.close()
+        connexion.close()
+
+if __name__ == "__main__" :
+    print("programme de surveillance ")
+    try:
+        while True :
+            choix_de_utilisateur()
+            time.sleep(60)
+
+    except keyboardInterrupt:
+        print("au revoir ")
+
+
+
+
+
+
+
+
 
 
 

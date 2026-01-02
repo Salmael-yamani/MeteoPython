@@ -17,6 +17,11 @@ config_mysql = {
     'password': 'Salma2003',
     'database': 'meteo_db'
 }
+
+
+
+
+
 '''
 #listes
 ville1 = ["Rabat","Casablanca","Tanger","Marrakech","Oujda","Bouarfa"]
@@ -189,8 +194,8 @@ def choix_de_utilisateur() :
             cursor = connexion.cursor()
 
             requete_insert = """
-            insert into utilisateur_mete
-            (ville , temperature , temp_min , temp_max , humidite , descriptions )
+            insert into utilisateur_meteo
+            (ville , temperature , humidite , descriptions ,temp_min , temp_max , probabilite_pluie , vitesse_vent)
             VALUES (%s, %s, %s, %s, %s, %s)"""
             valeurs = (
                 ville_nom,
@@ -198,12 +203,14 @@ def choix_de_utilisateur() :
                 humidite,
                 descriptions,
                 temp_min,
-                temp_max
+                temp_max,
+                probabilite_pluie ,
+                vitesse_vent
             )
             cursor.execute(requete_insert, valeurs)
             connexion.commit()
 
-            print("les donnees dont enregistree dans MySQL")
+            print("les donnees sont enregistree dans MySQL")
 
         return True
 
@@ -223,7 +230,7 @@ if __name__ == "__main__":
 
     try:
             continuer = True
-            while True :
+            while continuer :
                 continuer=choix_de_utilisateur()
                 time.sleep(2)
 

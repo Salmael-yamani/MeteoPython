@@ -53,19 +53,36 @@ def recuperer_meteo() :
            response = requests.get(url)
            data = response.json()
 
+           # Forecast API (pour probabilite de pluie)
+           url_forecast = f"http://api.openweathermap.org/data/2.5/forecast?q={ville}&appid={API_Key}&units=metric"
+           response_forecast = requests.get(url_forecast)
+           forecast_data = response_forecast.json()
+
+           # Probabilite de pluie (prochaines 3 heures)
+           prob_pluie = forecast_data["list"][0].get("pop", 0) * 100
+
+
            ville_nom = data["name"]
            temperature = data["main"]["temp"]
            humidite = data["main"]["humidity"]
            descriptions = data["weather"][0]["description"]
            temp_min = data["main"]["temp_min"]
            temp_max = data["main"]["temp_max"]
+           vitesse_vent = data["wind"]["speed"]
+           temp_moy = (temp_min + temp_max) / 2
 
 
 
            print(f"\nville : {ville_nom}")
            print(f"Température  : {temperature} °C")
+           print(f"Température min  : {temp_min} °C")
+           print(f"Température max  : {temp_max} °C")
+           print(f"Température moyenne : {temp_moy:.2f} °C")
            print(f"Humidité : {humidite} %")
            print(f"État du ciel : {descriptions}" )
+           print(f"Probabilité de pluie (3 prochaines heures) : {prob_pluie:.0f} %")
+           print(f"Vitesse du vent : {vitesse_vent} m/s")
+
 
 
 
